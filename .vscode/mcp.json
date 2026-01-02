@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "playwright": {
+      "command": "/usr/local/bin/npx",
+      "args": ["@playwright/mcp"]
+    }
+  }
+}
