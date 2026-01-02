@@ -10,15 +10,8 @@ import type { OutputState } from "./types";
 
 const DEBOUNCE_DELAY_MS = 250;
 
-// 動的インポート用の型
-type StageData = {
-  input: unknown;
-  expected: unknown;
-};
-
 function App() {
   const [currentStageId, setCurrentStageId] = useState<string>(stages[0].id);
-  const [stageData, setStageData] = useState<StageData | null>(null);
   const [filterInput, setFilterInput] = useState<string>(
     stages[0].defaultFilter
   );
@@ -33,25 +26,8 @@ function App() {
 
   const { getJq } = useJq();
 
-  // ステージデータの読み込み
-  useEffect(() => {
-    const currentStage = stages.find((s) => s.id === currentStageId);
-    if (!currentStage) return;
-
-    Promise.all([
-      import(/* @vite-ignore */ currentStage.inputFile),
-      import(/* @vite-ignore */ currentStage.expectedFile),
-    ])
-      .then(([inputModule, expectedModule]) => {
-        setStageData({
-          input: inputModule.default,
-          expected: expectedModule.default,
-        });
-      })
-      .catch((error) => {
-        console.error("Failed to load stage data:", error);
-      });
-  }, [currentStageId]);
+  // 現在のステージを取得
+  const currentStage = stages.find((s) => s.id === currentStageId);
 
   // ステージ選択時の処理
   const handleStageSelect = (stageId: string) => {
@@ -66,13 +42,15 @@ function App() {
     }
   };
 
-  const inputJson = stageData ? JSON.stringify(stageData.input, null, 2) : "";
-  const expectedOutput = stageData
-    ? JSON.stringify(stageData.expected, null, 2)
+  const inputJson = currentStage
+    ? JSON.stringify(currentStage.inputData, null, 2)
+    : "";
+  const expectedOutput = currentStage
+    ? JSON.stringify(currentStage.expectedData, null, 2)
     : "";
 
   useEffect(() => {
-    if (!stageData) return;
+    if (!currentStage) return;
     let cancelled = false;
 
     const timer = setTimeout(async () => {
@@ -118,7 +96,7 @@ function App() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [inputJson, filterInput, getJq, stageData]);
+  }, [inputJson, filterInput, getJq, currentStage]);
 
   const syncScroll = (
     source: HTMLPreElement | null,
@@ -133,8 +111,6 @@ function App() {
       isSyncingScrollRef.current = false;
     });
   };
-
-  const currentStage = stages.find((s) => s.id === currentStageId);
 
   return (
     <div className="flex h-screen justify-center bg-neutral-50">
