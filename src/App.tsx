@@ -13,14 +13,14 @@ function Pane({ title, children, className }: PaneProps) {
   return (
     <section
       className={
-        "flex min-h-0 flex-col rounded-lg border border-neutral-200 bg-white" +
+        "flex min-h-0 min-w-0 flex-col rounded-lg bg-white" +
         (className ? ` ${className}` : "")
       }
     >
-      <header className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+      <header className="bg-neutral-50 px-4 py-3">
         <h2 className="text-sm font-semibold text-neutral-900">{title}</h2>
       </header>
-      <div className="min-h-0 flex-1 p-4">{children}</div>
+      <div className="min-h-0 flex-1 p-4\">{children}</div>
     </section>
   );
 }
@@ -112,25 +112,24 @@ function App() {
   }, [inputJson, filterInput]);
 
   return (
-    <div className="flex min-h-screen justify-center bg-neutral-50">
-      <div className="flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
+    <div className="flex h-screen justify-center overflow-hidden bg-neutral-50">
+      <div className="flex h-full w-3/4 flex-col gap-4 px-4 py-6">
         <header className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold text-neutral-900">Learn jq</h1>
           <p className="text-sm text-neutral-600">
-            JSON と jq フィルターを入力して、出力を確認できる学習アプリ（UI
-            の土台）
+            JSON と jq フィルターを入力して、出力を確認できる学習アプリ
           </p>
         </header>
 
-        <main className="grid min-h-[70vh] grid-cols-1 gap-4 md:grid-cols-2 md:grid-rows-3">
-          <Pane title="元のJSON" className="md:row-span-3">
+        <main className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden md:flex-row">
+          <Pane title="元のJSON" className="flex-1 md:flex-[2] min-w-0">
             <label className="sr-only" htmlFor="input-json">
               元のJSON
             </label>
             <div className="flex h-full min-h-0 flex-col">
               <textarea
                 id="input-json"
-                className="min-h-[15vh] w-full flex-1 resize-none rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-300 md:min-h-24"
+                className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-400"
                 value={inputJson}
                 readOnly
                 spellCheck={false}
@@ -138,63 +137,64 @@ function App() {
             </div>
           </Pane>
 
-          <Pane title="想定出力" className="md:col-start-2 md:row-start-1">
-            <label className="sr-only" htmlFor="expected-output">
-              想定出力
-            </label>
-            <div className="flex h-full min-h-0 flex-col">
-              <textarea
-                id="expected-output"
-                className="min-h-28 w-full flex-1 resize-none rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-300 md:min-h-40"
-                value={expectedOutput}
-                readOnly
-                spellCheck={false}
-              />
-            </div>
-          </Pane>
-
-          <Pane title="ユーザの入力" className="md:col-start-2 md:row-start-2">
-            <label className="sr-only" htmlFor="filter-input">
-              jq フィルター
-            </label>
-            <div className="flex h-full min-h-0 flex-col gap-3">
-              <textarea
-                id="filter-input"
-                className="min-h-28 w-full flex-1 resize-none rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-300 md:min-h-40"
-                value={filterInput}
-                onChange={(e) => setFilterInput(e.target.value)}
-                placeholder="例: .users | map(.name)"
-                spellCheck={false}
-              />
-            </div>
-          </Pane>
-
-          <Pane title="出力結果" className="md:col-start-2 md:row-start-3">
-            <div className="flex h-full min-h-0 flex-col">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-neutral-600">実行結果</span>
-                <button
-                  type="button"
-                  className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-900 hover:bg-neutral-50"
-                  onClick={() => setOutput({ kind: "ok", text: "" })}
-                >
-                  クリア
-                </button>
+          <div className="flex min-h-0 min-w-0 flex-shrink-0 flex-col gap-4 overflow-y-auto md:w-80">
+            <Pane
+              title="想定出力"
+              className="h-[clamp(10rem,16vh,15rem)] max-w-full"
+            >
+              <label className="sr-only" htmlFor="expected-output">
+                想定出力
+              </label>
+              <div className="flex h-full min-h-0 flex-col">
+                <textarea
+                  id="expected-output"
+                  className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-400"
+                  value={expectedOutput}
+                  readOnly
+                  spellCheck={false}
+                />
               </div>
-              <pre
-                className={
-                  "min-h-28 flex-1 overflow-auto rounded-md border border-neutral-300 bg-white p-3 font-mono text-sm md:min-h-40 " +
-                  (output.kind === "placeholder"
-                    ? "text-neutral-500"
-                    : output.kind === "error"
-                    ? "text-red-700"
-                    : "text-neutral-900")
-                }
-              >
-                {output.text || "（空）"}
-              </pre>
-            </div>
-          </Pane>
+            </Pane>
+
+            <Pane
+              title="ユーザの入力"
+              className="h-[clamp(10rem,16vh,15rem)] max-w-full"
+            >
+              <label className="sr-only" htmlFor="filter-input">
+                jq フィルター
+              </label>
+              <div className="flex h-full min-h-0 flex-col gap-3">
+                <textarea
+                  id="filter-input"
+                  className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-400"
+                  value={filterInput}
+                  onChange={(e) => setFilterInput(e.target.value)}
+                  placeholder="例: .users | map(.name)"
+                  spellCheck={false}
+                />
+              </div>
+            </Pane>
+
+            <Pane
+              title="出力結果"
+              className="h-[clamp(10rem,16vh,15rem)] max-w-full"
+            >
+              <div className="flex h-full min-h-0 flex-col">
+                <pre
+                  className={
+                    "min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 " +
+                    (output.kind === "placeholder"
+                      ? "text-neutral-500"
+                      : output.kind === "error"
+                      ? "text-red-700"
+                      : "text-neutral-900")
+                  }
+                >
+                  {output.text || ""}
+                </pre>
+              </div>
+            </Pane>
+          </div>
         </main>
       </div>
     </div>

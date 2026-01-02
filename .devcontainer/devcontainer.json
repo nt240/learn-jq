@@ -1,6 +1,6 @@
 {
   "name": "Node.js & TypeScript",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:latest",
+  "image": "mcr.microsoft.com/playwright:latest",
 
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
@@ -12,24 +12,17 @@
       "extensions": [
         "bradlc.vscode-tailwindcss",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
       ]
     }
   },
-
-  "forwardPorts": [3000, 5173],
-  "portsAttributes": {
-    "3000": {
-      "label": "Application",
-      "onAutoForward": "notify"
-    },
-    "5173": {
-      "label": "Vite Dev Server",
-      "onAutoForward": "notify"
-    }
+  "containerEnv": {
+    "PLAYWRIGHT_BROWSER": "chromium"
   },
 
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "npm install && npx playwright install chromium",
 
-  "remoteUser": "node"
+  "remoteUser": "pwuser"
 }

@@ -2,11 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 html,
 body {
   height: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 body {
   margin: 0;
+}
+
+/* Hide horizontal scrollbar gutter */
+.overflow-x-clip {
+  scrollbar-gutter: stable;
 }
