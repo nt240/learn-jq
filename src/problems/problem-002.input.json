@@ -1,0 +1,39 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Laptop",
+      "price": 1200,
+      "inStock": true,
+      "category": "electronics"
+    },
+    {
+      "id": 2,
+      "name": "Mouse",
+      "price": 25,
+      "inStock": true,
+      "category": "electronics"
+    },
+    {
+      "id": 3,
+      "name": "Desk",
+      "price": 300,
+      "inStock": false,
+      "category": "furniture"
+    },
+    {
+      "id": 4,
+      "name": "Chair",
+      "price": 150,
+      "inStock": true,
+      "category": "furniture"
+    },
+    {
+      "id": 5,
+      "name": "Monitor",
+      "price": 400,
+      "inStock": true,
+      "category": "electronics"
+    }
+  ]
+}

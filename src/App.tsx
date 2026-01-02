@@ -1,22 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 
-import problem001Input from "./problems/problem-001.input.json";
-import problem001Expected from "./problems/problem-001.expected.json";
 import { JsonCode } from "./components/JsonCode";
 import { Pane } from "./components/Pane";
+import { StageMenu } from "./components/StageMenu";
+import { stages } from "./config/stages";
 import { useJq } from "./hooks/useJq";
 import type { OutputState } from "./types";
 
 const DEBOUNCE_DELAY_MS = 250;
 
+// 動的インポート用の型
+type StageData = {
+  input: unknown;
+  expected: unknown;
+};
+
 function App() {
-  const [inputJson] = useState<string>(
-    JSON.stringify(problem001Input, null, 2)
+  const [currentStageId, setCurrentStageId] = useState<string>(stages[0].id);
+  const [stageData, setStageData] = useState<StageData | null>(null);
+  const [filterInput, setFilterInput] = useState<string>(
+    stages[0].defaultFilter
   );
-  const [expectedOutput] = useState<string>(
-    JSON.stringify(problem001Expected, null, 2)
-  );
-  const [filterInput, setFilterInput] = useState<string>(".users | map(.name)");
   const [output, setOutput] = useState<OutputState>({
     kind: "placeholder",
     text: "（ここに実行結果を表示します）",
@@ -28,7 +32,46 @@ function App() {
 
   const { getJq } = useJq();
 
+  // ステージデータの読み込み
   useEffect(() => {
+    const currentStage = stages.find((s) => s.id === currentStageId);
+    if (!currentStage) return;
+
+    Promise.all([
+      import(/* @vite-ignore */ currentStage.inputFile),
+      import(/* @vite-ignore */ currentStage.expectedFile),
+    ])
+      .then(([inputModule, expectedModule]) => {
+        setStageData({
+          input: inputModule.default,
+          expected: expectedModule.default,
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to load stage data:", error);
+      });
+  }, [currentStageId]);
+
+  // ステージ選択時の処理
+  const handleStageSelect = (stageId: string) => {
+    setCurrentStageId(stageId);
+    const stage = stages.find((s) => s.id === stageId);
+    if (stage) {
+      setFilterInput(stage.defaultFilter);
+      setOutput({
+        kind: "placeholder",
+        text: "（ここに実行結果を表示します）",
+      });
+    }
+  };
+
+  const inputJson = stageData ? JSON.stringify(stageData.input, null, 2) : "";
+  const expectedOutput = stageData
+    ? JSON.stringify(stageData.expected, null, 2)
+    : "";
+
+  useEffect(() => {
+    if (!stageData) return;
     let cancelled = false;
 
     const timer = setTimeout(async () => {
@@ -74,7 +117,7 @@ function App() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [inputJson, filterInput, getJq]);
+  }, [inputJson, filterInput, getJq, stageData]);
 
   const syncScroll = (
     source: HTMLPreElement | null,
@@ -90,17 +133,30 @@ function App() {
     });
   };
 
+  const currentStage = stages.find((s) => s.id === currentStageId);
+
   return (
     <div className="flex h-screen justify-center bg-neutral-50">
-      <div className="flex h-full w-3/4 flex-col gap-4 px-4 py-6">
-        <header className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold text-neutral-900">Learn jq</h1>
-          <p className="text-sm text-neutral-600">
-            JSON と jq フィルターを入力して、出力を確認できる学習アプリ
-          </p>
-        </header>
+      {/* ハンバーガーメニュー */}
+      <StageMenu
+        currentStageId={currentStageId}
+        onStageSelect={handleStageSelect}
+      />
 
-        <main className="flex flex-1 min-h-0 flex-col gap-4 overflow-auto">
+      {/* メインコンテンツ */}
+      <div className="flex w-3/4 flex-col gap-4 overflow-auto px-8 py-6 ml-14">
+        {currentStage && (
+          <header className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold text-neutral-900">
+              {currentStage.title}
+            </h2>
+            <p className="text-sm text-neutral-600">
+              {currentStage.description}
+            </p>
+          </header>
+        )}
+
+        <main className="flex flex-1 min-h-0 flex-col gap-4">
           <Pane title="元のJSON" className="h-[clamp(18rem,45vh,36rem)]">
             <span id="input-json-label" className="sr-only">
               元のJSON

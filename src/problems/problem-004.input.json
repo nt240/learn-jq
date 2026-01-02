@@ -1,0 +1,10 @@
+{
+  "orders": [
+    { "id": 1, "customer": "Alice", "amount": 150, "status": "completed" },
+    { "id": 2, "customer": "Bob", "amount": 200, "status": "completed" },
+    { "id": 3, "customer": "Alice", "amount": 80, "status": "completed" },
+    { "id": 4, "customer": "Carol", "amount": 120, "status": "pending" },
+    { "id": 5, "customer": "Bob", "amount": 300, "status": "completed" },
+    { "id": 6, "customer": "Alice", "amount": 90, "status": "completed" }
+  ]
+}
