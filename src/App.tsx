@@ -29,8 +29,9 @@ function App() {
   const initialStage =
     stages.find((s) => s.id === initialState.stageId) || stages[0];
 
-  const [currentStageId, setCurrentStageId] =
-    useState<string>(initialState.stageId);
+  const [currentStageId, setCurrentStageId] = useState<string>(
+    initialState.stageId
+  );
   const [filterInput, setFilterInput] = useState<string>(
     initialState.filter || initialStage.defaultFilter
   );
