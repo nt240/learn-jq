@@ -1,0 +1,20 @@
+{
+  "id": "004",
+  "title": "集計とグループ化",
+  "description": "ordersから完了した注文をcustomer別にグループ化し、各顧客の合計金額を求める",
+  "defaultFilter": ".orders | map(select(.status == \"completed\")) | group_by(.customer) | map({(.[0].customer): (map(.amount) | add)}) | add",
+  "input": {
+    "orders": [
+      { "id": 1, "customer": "Alice", "amount": 150, "status": "completed" },
+      { "id": 2, "customer": "Bob", "amount": 200, "status": "completed" },
+      { "id": 3, "customer": "Alice", "amount": 80, "status": "completed" },
+      { "id": 4, "customer": "Carol", "amount": 120, "status": "pending" },
+      { "id": 5, "customer": "Bob", "amount": 300, "status": "completed" },
+      { "id": 6, "customer": "Alice", "amount": 90, "status": "completed" }
+    ]
+  },
+  "expected": {
+    "Alice": 320,
+    "Bob": 500
+  }
+}

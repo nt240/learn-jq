@@ -1,0 +1,40 @@
+{
+  "id": "005",
+  "title": "ネストしたデータの処理",
+  "description": "会社のすべての部署の全従業員が持つすべてのスキルを重複なしのフラットな配列として取得する",
+  "defaultFilter": ".company.departments | map(.employees | map(.skills) | flatten) | flatten | unique | sort",
+  "input": {
+    "company": {
+      "name": "Tech Corp",
+      "departments": [
+        {
+          "name": "Engineering",
+          "employees": [
+            { "name": "Alice", "skills": ["Python", "JavaScript", "React"] },
+            { "name": "Bob", "skills": ["Java", "Spring", "SQL"] }
+          ]
+        },
+        {
+          "name": "Design",
+          "employees": [
+            { "name": "Carol", "skills": ["Figma", "Photoshop", "UI/UX"] },
+            { "name": "Dave", "skills": ["Illustrator", "Sketch"] }
+          ]
+        }
+      ]
+    }
+  },
+  "expected": [
+    "Figma",
+    "Illustrator",
+    "Java",
+    "JavaScript",
+    "Photoshop",
+    "Python",
+    "React",
+    "SQL",
+    "Sketch",
+    "Spring",
+    "UI/UX"
+  ]
+}

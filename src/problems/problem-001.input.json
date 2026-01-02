@@ -1,8 +1,0 @@
-{
-  "users": [
-    { "id": 1, "name": "Alice", "age": 20, "gender": "female" },
-    { "id": 2, "name": "Bob", "age": 25, "gender": "male" },
-    { "id": 3, "name": "Carol", "age": 30, "gender": "female" },
-    { "id": 4, "name": "Dave", "age": 22, "gender": "male" }
-  ]
-}

@@ -1,0 +1,15 @@
+{
+  "id": "001",
+  "title": "基本: 配列の取り出しとmap",
+  "description": "usersオブジェクトから全てのユーザー名を配列として取得する",
+  "defaultFilter": ".users | map(.name)",
+  "input": {
+    "users": [
+      { "id": 1, "name": "Alice", "age": 20, "gender": "female" },
+      { "id": 2, "name": "Bob", "age": 25, "gender": "male" },
+      { "id": 3, "name": "Carol", "age": 30, "gender": "female" },
+      { "id": 4, "name": "Dave", "age": 22, "gender": "male" }
+    ]
+  },
+  "expected": ["Alice", "Bob", "Carol", "Dave"]
+}
