@@ -121,6 +121,10 @@ function App() {
     text: "（ここに実行結果を表示します）",
   });
 
+  const expectedOutputPreRef = useRef<HTMLPreElement | null>(null);
+  const outputResultPreRef = useRef<HTMLPreElement | null>(null);
+  const isSyncingScrollRef = useRef(false);
+
   const jqRef = useRef<Promise<{
     json: (input: unknown, filter: string) => Promise<unknown>;
   }> | null>(null);
@@ -189,6 +193,20 @@ function App() {
     };
   }, [inputJson, filterInput]);
 
+  const syncScroll = (
+    source: HTMLPreElement | null,
+    target: HTMLPreElement | null
+  ) => {
+    if (!source || !target) return;
+    if (isSyncingScrollRef.current) return;
+    isSyncingScrollRef.current = true;
+    target.scrollTop = source.scrollTop;
+    target.scrollLeft = source.scrollLeft;
+    requestAnimationFrame(() => {
+      isSyncingScrollRef.current = false;
+    });
+  };
+
   return (
     <div className="flex h-screen justify-center bg-neutral-50">
       <div className="flex h-full w-3/4 flex-col gap-4 px-4 py-6">
@@ -201,29 +219,18 @@ function App() {
 
         <main className="flex flex-1 min-h-0 flex-col gap-4 overflow-auto">
           <Pane title="元のJSON" className="h-[clamp(18rem,45vh,36rem)]">
-            <label className="sr-only" htmlFor="input-json">
+            <span id="input-json-label" className="sr-only">
               元のJSON
-            </label>
+            </span>
             <div className="flex h-full min-h-0 flex-col">
               <pre
                 id="input-json"
+                role="textbox"
+                aria-readonly="true"
+                aria-labelledby="input-json-label"
                 className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5"
               >
                 <JsonCode text={inputJson} />
-              </pre>
-            </div>
-          </Pane>
-
-          <Pane title="想定出力" className="h-[clamp(10rem,16vh,15rem)]">
-            <label className="sr-only" htmlFor="expected-output">
-              想定出力
-            </label>
-            <div className="flex h-full min-h-0 flex-col">
-              <pre
-                id="expected-output"
-                className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5"
-              >
-                <JsonCode text={expectedOutput} />
               </pre>
             </div>
           </Pane>
@@ -244,26 +251,83 @@ function App() {
             </div>
           </Pane>
 
-          <Pane title="出力結果" className="h-[clamp(10rem,16vh,15rem)]">
-            <div className="flex h-full min-h-0 flex-col">
-              {output.kind === "ok" ? (
-                <pre className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5">
-                  <JsonCode text={output.text || ""} />
-                </pre>
-              ) : (
+          <div className="flex min-h-0 flex-col gap-4 md:flex-row">
+            <Pane
+              title="想定出力"
+              className="h-[clamp(12rem,22vh,20rem)] flex-1"
+            >
+              <span id="expected-output-label" className="sr-only">
+                想定出力
+              </span>
+              <div className="flex h-full min-h-0 flex-col">
                 <pre
-                  className={
-                    "min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 " +
-                    (output.kind === "placeholder"
-                      ? "text-neutral-500"
-                      : "text-red-700")
+                  id="expected-output"
+                  ref={expectedOutputPreRef}
+                  role="textbox"
+                  aria-readonly="true"
+                  aria-labelledby="expected-output-label"
+                  className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5"
+                  onScroll={() =>
+                    syncScroll(
+                      expectedOutputPreRef.current,
+                      outputResultPreRef.current
+                    )
                   }
                 >
-                  {output.text || ""}
+                  <JsonCode text={expectedOutput} />
                 </pre>
-              )}
-            </div>
-          </Pane>
+              </div>
+            </Pane>
+
+            <Pane
+              title="出力結果"
+              className="h-[clamp(12rem,22vh,20rem)] flex-1"
+            >
+              <span id="output-result-label" className="sr-only">
+                出力結果
+              </span>
+              <div className="flex h-full min-h-0 flex-col">
+                {output.kind === "ok" ? (
+                  <pre
+                    ref={outputResultPreRef}
+                    role="textbox"
+                    aria-readonly="true"
+                    aria-labelledby="output-result-label"
+                    className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5"
+                    onScroll={() =>
+                      syncScroll(
+                        outputResultPreRef.current,
+                        expectedOutputPreRef.current
+                      )
+                    }
+                  >
+                    <JsonCode text={output.text || ""} />
+                  </pre>
+                ) : (
+                  <pre
+                    ref={outputResultPreRef}
+                    role="textbox"
+                    aria-readonly="true"
+                    aria-labelledby="output-result-label"
+                    className={
+                      "min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 " +
+                      (output.kind === "placeholder"
+                        ? "text-neutral-500"
+                        : "text-red-700")
+                    }
+                    onScroll={() =>
+                      syncScroll(
+                        outputResultPreRef.current,
+                        expectedOutputPreRef.current
+                      )
+                    }
+                  >
+                    {output.text || ""}
+                  </pre>
+                )}
+              </div>
+            </Pane>
+          </div>
         </main>
       </div>
     </div>
