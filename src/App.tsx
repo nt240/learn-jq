@@ -12,10 +12,27 @@ import type { OutputState } from "./types";
 
 const DEBOUNCE_DELAY_MS = 250;
 
+// URLから初期ステージIDとフィルター入力を取得
+function getInitialState(): { stageId: string; filter?: string } {
+  const params = new URLSearchParams(window.location.search);
+  const hash = window.location.hash.slice(1); // #を除去
+  const filter = params.get("filter");
+
+  const stageId =
+    hash && stages.some((s) => s.id === hash) ? hash : stages[0].id;
+
+  return { stageId, filter: filter || undefined };
+}
+
 function App() {
-  const [currentStageId, setCurrentStageId] = useState<string>(stages[0].id);
+  const initialState = getInitialState();
+  const initialStage =
+    stages.find((s) => s.id === initialState.stageId) || stages[0];
+
+  const [currentStageId, setCurrentStageId] =
+    useState<string>(initialState.stageId);
   const [filterInput, setFilterInput] = useState<string>(
-    stages[0].defaultFilter
+    initialState.filter || initialStage.defaultFilter
   );
   const [output, setOutput] = useState<OutputState>({
     kind: "placeholder",
@@ -40,6 +57,18 @@ function App() {
     setHelpMenuOpen(true);
   };
 
+  // URLを更新するヘルパー関数
+  const updateURL = (stageId: string, filter: string) => {
+    const url = new URL(window.location.href);
+    url.hash = stageId;
+    if (filter) {
+      url.searchParams.set("filter", filter);
+    } else {
+      url.searchParams.delete("filter");
+    }
+    window.history.replaceState({}, "", url.toString());
+  };
+
   // ステージ選択時の処理
   const handleStageSelect = (stageId: string) => {
     setCurrentStageId(stageId);
@@ -50,9 +79,41 @@ function App() {
         kind: "placeholder",
         text: "（ここに実行結果を表示します）",
       });
+
+      // URLを更新（pushStateで履歴に追加）
+      const url = new URL(window.location.href);
+      url.hash = stageId;
+      url.searchParams.set("filter", stage.defaultFilter);
+      window.history.pushState({}, "", url.toString());
     }
   };
 
+  // ブラウザの戻る/進むボタンに対応
+  useEffect(() => {
+    const handleHashChange = () => {
+      const state = getInitialState();
+      setCurrentStageId(state.stageId);
+      const stage = stages.find((s) => s.id === state.stageId);
+      if (stage) {
+        setFilterInput(state.filter || stage.defaultFilter);
+        setOutput({
+          kind: "placeholder",
+          text: "（ここに実行結果を表示します）",
+        });
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+  // フィルター入力が変更されたときにURLを更新（デバウンス）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateURL(currentStageId, filterInput);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [filterInput, currentStageId]);
   const inputJson = currentStage
     ? JSON.stringify(currentStage.inputData, null, 2)
     : "";
