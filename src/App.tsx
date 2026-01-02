@@ -4,8 +4,10 @@ import { JsonCode } from "./components/JsonCode";
 import { Pane } from "./components/Pane";
 import { StageMenu } from "./components/StageMenu";
 import { HelpMenu } from "./components/HelpMenu";
+import { JqFilterInput } from "./components/JqFilterInput";
 import { stages } from "./config/stages";
 import { useJq } from "./hooks/useJq";
+import { getFunctionAnchor } from "./utils/jqFunctions";
 import type { OutputState } from "./types";
 
 const DEBOUNCE_DELAY_MS = 250;
@@ -19,6 +21,8 @@ function App() {
     kind: "placeholder",
     text: "（ここに実行結果を表示します）",
   });
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false);
+  const [helpMenuAnchor, setHelpMenuAnchor] = useState<string>("");
 
   const expectedOutputPreRef = useRef<HTMLPreElement | null>(null);
   const outputResultPreRef = useRef<HTMLPreElement | null>(null);
@@ -28,6 +32,13 @@ function App() {
 
   // 現在のステージを取得
   const currentStage = stages.find((s) => s.id === currentStageId);
+
+  // jq関数リンクをクリックした時のハンドラー
+  const handleFunctionClick = (functionName: string) => {
+    const anchor = getFunctionAnchor(functionName);
+    setHelpMenuAnchor(anchor);
+    setHelpMenuOpen(true);
+  };
 
   // ステージ選択時の処理
   const handleStageSelect = (stageId: string) => {
@@ -121,10 +132,19 @@ function App() {
       />
 
       {/* 右側：ヘルプメニュー */}
-      <HelpMenu />
+      <HelpMenu
+        isOpen={helpMenuOpen}
+        onOpen={() => setHelpMenuOpen(true)}
+        onClose={() => setHelpMenuOpen(false)}
+        anchor={helpMenuAnchor}
+      />
 
       {/* メインコンテンツ */}
-      <div className="flex w-3/4 flex-col gap-4 overflow-auto px-8 py-6 ml-14 mr-14 peer-hover:translate-x-[-16.666%] transition-transform duration-300 ease-in-out">
+      <div
+        className={`flex w-3/4 flex-col gap-4 overflow-auto px-8 py-6 ml-14 mr-14 transition-transform duration-300 ease-in-out ${
+          helpMenuOpen ? "translate-x-[-14vw]" : ""
+        }`}
+      >
         {currentStage && (
           <header className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold text-neutral-900">
@@ -159,13 +179,10 @@ function App() {
               jq フィルター
             </label>
             <div className="flex h-full min-h-0 flex-col gap-3">
-              <textarea
-                id="filter-input"
-                className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:border-neutral-400"
+              <JqFilterInput
                 value={filterInput}
-                onChange={(e) => setFilterInput(e.target.value)}
-                placeholder="例: .users | map(.name)"
-                spellCheck={false}
+                onChange={setFilterInput}
+                onFunctionClick={handleFunctionClick}
               />
             </div>
           </Pane>
