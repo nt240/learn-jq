@@ -2,111 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 import problem001Input from "./problems/problem-001.input.json";
 import problem001Expected from "./problems/problem-001.expected.json";
+import { JsonCode } from "./components/JsonCode";
+import { Pane } from "./components/Pane";
+import { useJq } from "./hooks/useJq";
+import type { OutputState } from "./types";
 
-type JsonTokenKind =
-  | "key"
-  | "string"
-  | "number"
-  | "boolean"
-  | "null"
-  | "punctuation"
-  | "text";
-
-type JsonToken = { kind: JsonTokenKind; text: string };
-
-function tokenizeJson(source: string): JsonToken[] {
-  const tokens: JsonToken[] = [];
-
-  // Order matters: keys must be matched before generic strings.
-  const re =
-    /"(?:\\.|[^"\\])*"(?=\s*:)|"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\btrue\b|\bfalse\b|\bnull\b|[{}[\],:]/g;
-
-  let lastIndex = 0;
-  for (const match of source.matchAll(re)) {
-    const index = match.index ?? 0;
-    if (index > lastIndex) {
-      tokens.push({ kind: "text", text: source.slice(lastIndex, index) });
-    }
-
-    const text = match[0];
-    let kind: JsonTokenKind = "text";
-    if (text === "true" || text === "false") kind = "boolean";
-    else if (text === "null") kind = "null";
-    else if (text.length === 1 && "{}[],:".includes(text)) kind = "punctuation";
-    else if (text.startsWith('"')) {
-      const nextChar = source.slice(index + text.length).trimStart()[0];
-      kind = nextChar === ":" ? "key" : "string";
-    } else kind = "number";
-
-    tokens.push({ kind, text });
-    lastIndex = index + text.length;
-  }
-
-  if (lastIndex < source.length) {
-    tokens.push({ kind: "text", text: source.slice(lastIndex) });
-  }
-
-  return tokens;
-}
-
-function JsonCode({ text }: { text: string }) {
-  const tokens = tokenizeJson(text);
-
-  const classFor = (kind: JsonTokenKind) => {
-    switch (kind) {
-      case "key":
-        return "text-sky-700 font-semibold";
-      case "string":
-        return "text-emerald-700";
-      case "number":
-        return "text-amber-700";
-      case "boolean":
-      case "null":
-        return "text-violet-700";
-      case "punctuation":
-        return "text-slate-400";
-      default:
-        return "text-slate-900";
-    }
-  };
-
-  return (
-    <code>
-      {tokens.map((t, i) => (
-        <span key={i} className={classFor(t.kind)}>
-          {t.text}
-        </span>
-      ))}
-    </code>
-  );
-}
-
-type PaneProps = {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-};
-
-function Pane({ title, children, className }: PaneProps) {
-  return (
-    <section
-      className={
-        "flex min-h-0 min-w-0 flex-col rounded-lg bg-white" +
-        (className ? ` ${className}` : "")
-      }
-    >
-      <header className="bg-neutral-50 px-4 py-3">
-        <h2 className="text-sm font-semibold text-neutral-900">{title}</h2>
-      </header>
-      <div className="min-h-0 flex-1 p-4">{children}</div>
-    </section>
-  );
-}
-
-type OutputState = {
-  kind: "placeholder" | "ok" | "error";
-  text: string;
-};
+const DEBOUNCE_DELAY_MS = 250;
 
 function App() {
   const [inputJson] = useState<string>(
@@ -125,25 +26,7 @@ function App() {
   const outputResultPreRef = useRef<HTMLPreElement | null>(null);
   const isSyncingScrollRef = useRef(false);
 
-  const jqRef = useRef<Promise<{
-    json: (input: unknown, filter: string) => Promise<unknown>;
-  }> | null>(null);
-
-  const getJq = async () => {
-    if (!jqRef.current) {
-      // jq-web (Emscripten) looks for jq.wasm next to the JS bundle by default.
-      // In Vite, the wasm file is emitted as an asset with a hashed name, so we
-      // override locateFile to point to the correct URL.
-      const g = globalThis as unknown as { Module?: Record<string, unknown> };
-      g.Module = g.Module ?? {};
-      (g.Module as Record<string, unknown>).locateFile = (path: string) => {
-        return path.endsWith("jq.wasm") ? "/jq.wasm" : path;
-      };
-
-      jqRef.current = import("jq-web").then((m) => m.default);
-    }
-    return jqRef.current;
-  };
+  const { getJq } = useJq();
 
   useEffect(() => {
     let cancelled = false;
@@ -185,13 +68,13 @@ function App() {
         const message = stderr || (e instanceof Error ? e.message : String(e));
         setOutput({ kind: "error", text: message });
       }
-    }, 250);
+    }, DEBOUNCE_DELAY_MS);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [inputJson, filterInput]);
+  }, [inputJson, filterInput, getJq]);
 
   const syncScroll = (
     source: HTMLPreElement | null,
