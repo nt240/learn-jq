@@ -3,6 +3,84 @@ import { useEffect, useRef, useState } from "react";
 import problem001Input from "./problems/problem-001.input.json";
 import problem001Expected from "./problems/problem-001.expected.json";
 
+type JsonTokenKind =
+  | "key"
+  | "string"
+  | "number"
+  | "boolean"
+  | "null"
+  | "punctuation"
+  | "text";
+
+type JsonToken = { kind: JsonTokenKind; text: string };
+
+function tokenizeJson(source: string): JsonToken[] {
+  const tokens: JsonToken[] = [];
+
+  // Order matters: keys must be matched before generic strings.
+  const re =
+    /"(?:\\.|[^"\\])*"(?=\s*:)|"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\btrue\b|\bfalse\b|\bnull\b|[{}[\],:]/g;
+
+  let lastIndex = 0;
+  for (const match of source.matchAll(re)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) {
+      tokens.push({ kind: "text", text: source.slice(lastIndex, index) });
+    }
+
+    const text = match[0];
+    let kind: JsonTokenKind = "text";
+    if (text === "true" || text === "false") kind = "boolean";
+    else if (text === "null") kind = "null";
+    else if (text.length === 1 && "{}[],:".includes(text)) kind = "punctuation";
+    else if (text.startsWith('"')) {
+      const nextChar = source.slice(index + text.length).trimStart()[0];
+      kind = nextChar === ":" ? "key" : "string";
+    } else kind = "number";
+
+    tokens.push({ kind, text });
+    lastIndex = index + text.length;
+  }
+
+  if (lastIndex < source.length) {
+    tokens.push({ kind: "text", text: source.slice(lastIndex) });
+  }
+
+  return tokens;
+}
+
+function JsonCode({ text }: { text: string }) {
+  const tokens = tokenizeJson(text);
+
+  const classFor = (kind: JsonTokenKind) => {
+    switch (kind) {
+      case "key":
+        return "text-sky-700 font-semibold";
+      case "string":
+        return "text-emerald-700";
+      case "number":
+        return "text-amber-700";
+      case "boolean":
+      case "null":
+        return "text-violet-700";
+      case "punctuation":
+        return "text-slate-400";
+      default:
+        return "text-slate-900";
+    }
+  };
+
+  return (
+    <code>
+      {tokens.map((t, i) => (
+        <span key={i} className={classFor(t.kind)}>
+          {t.text}
+        </span>
+      ))}
+    </code>
+  );
+}
+
 type PaneProps = {
   title: string;
   children: React.ReactNode;
@@ -20,7 +98,7 @@ function Pane({ title, children, className }: PaneProps) {
       <header className="bg-neutral-50 px-4 py-3">
         <h2 className="text-sm font-semibold text-neutral-900">{title}</h2>
       </header>
-      <div className="min-h-0 flex-1 p-4\">{children}</div>
+      <div className="min-h-0 flex-1 p-4">{children}</div>
     </section>
   );
 }
@@ -112,7 +190,7 @@ function App() {
   }, [inputJson, filterInput]);
 
   return (
-    <div className="flex h-screen justify-center overflow-hidden bg-neutral-50">
+    <div className="flex h-screen justify-center bg-neutral-50">
       <div className="flex h-full w-3/4 flex-col gap-4 px-4 py-6">
         <header className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold text-neutral-900">Learn jq</h1>
@@ -121,80 +199,71 @@ function App() {
           </p>
         </header>
 
-        <main className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden md:flex-row">
-          <Pane title="元のJSON" className="flex-1 md:flex-[2] min-w-0">
+        <main className="flex flex-1 min-h-0 flex-col gap-4 overflow-auto">
+          <Pane title="元のJSON" className="h-[clamp(18rem,45vh,36rem)]">
             <label className="sr-only" htmlFor="input-json">
               元のJSON
             </label>
             <div className="flex h-full min-h-0 flex-col">
-              <textarea
+              <pre
                 id="input-json"
-                className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-400"
-                value={inputJson}
-                readOnly
+                className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5"
+              >
+                <JsonCode text={inputJson} />
+              </pre>
+            </div>
+          </Pane>
+
+          <Pane title="想定出力" className="h-[clamp(10rem,16vh,15rem)]">
+            <label className="sr-only" htmlFor="expected-output">
+              想定出力
+            </label>
+            <div className="flex h-full min-h-0 flex-col">
+              <pre
+                id="expected-output"
+                className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5"
+              >
+                <JsonCode text={expectedOutput} />
+              </pre>
+            </div>
+          </Pane>
+
+          <Pane title="ユーザの入力" className="h-[clamp(10rem,16vh,15rem)]">
+            <label className="sr-only" htmlFor="filter-input">
+              jq フィルター
+            </label>
+            <div className="flex h-full min-h-0 flex-col gap-3">
+              <textarea
+                id="filter-input"
+                className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:border-neutral-400"
+                value={filterInput}
+                onChange={(e) => setFilterInput(e.target.value)}
+                placeholder="例: .users | map(.name)"
                 spellCheck={false}
               />
             </div>
           </Pane>
 
-          <div className="flex min-h-0 min-w-0 flex-shrink-0 flex-col gap-4 overflow-y-auto md:w-80">
-            <Pane
-              title="想定出力"
-              className="h-[clamp(10rem,16vh,15rem)] max-w-full"
-            >
-              <label className="sr-only" htmlFor="expected-output">
-                想定出力
-              </label>
-              <div className="flex h-full min-h-0 flex-col">
-                <textarea
-                  id="expected-output"
-                  className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-400"
-                  value={expectedOutput}
-                  readOnly
-                  spellCheck={false}
-                />
-              </div>
-            </Pane>
-
-            <Pane
-              title="ユーザの入力"
-              className="h-[clamp(10rem,16vh,15rem)] max-w-full"
-            >
-              <label className="sr-only" htmlFor="filter-input">
-                jq フィルター
-              </label>
-              <div className="flex h-full min-h-0 flex-col gap-3">
-                <textarea
-                  id="filter-input"
-                  className="min-h-0 w-full flex-1 resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-400"
-                  value={filterInput}
-                  onChange={(e) => setFilterInput(e.target.value)}
-                  placeholder="例: .users | map(.name)"
-                  spellCheck={false}
-                />
-              </div>
-            </Pane>
-
-            <Pane
-              title="出力結果"
-              className="h-[clamp(10rem,16vh,15rem)] max-w-full"
-            >
-              <div className="flex h-full min-h-0 flex-col">
+          <Pane title="出力結果" className="h-[clamp(10rem,16vh,15rem)]">
+            <div className="flex h-full min-h-0 flex-col">
+              {output.kind === "ok" ? (
+                <pre className="min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5">
+                  <JsonCode text={output.text || ""} />
+                </pre>
+              ) : (
                 <pre
                   className={
                     "min-h-0 w-full flex-1 overflow-auto rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-5 " +
                     (output.kind === "placeholder"
                       ? "text-neutral-500"
-                      : output.kind === "error"
-                      ? "text-red-700"
-                      : "text-neutral-900")
+                      : "text-red-700")
                   }
                 >
                   {output.text || ""}
                 </pre>
-              </div>
-            </Pane>
-          </div>
+              )}
+            </div>
+          </Pane>
         </main>
       </div>
     </div>
