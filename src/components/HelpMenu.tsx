@@ -1,6 +1,6 @@
 export function HelpMenu() {
   return (
-    <nav className="group fixed right-0 top-0 z-50 h-full">
+    <nav className="group peer fixed right-0 top-0 z-50 h-full">
       {/* ハンバーガーメニューボタン（常に表示） */}
       <div className="absolute right-0 top-0 flex h-14 w-14 items-center justify-center bg-white border-l border-b border-neutral-200 shadow-sm">
         <button
@@ -14,7 +14,7 @@ export function HelpMenu() {
       </div>
 
       {/* ホバー時に展開されるメニュー */}
-      <div className="absolute right-0 top-0 h-full w-150 translate-x-full bg-white shadow-lg transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+      <div className="absolute right-0 top-0 h-full w-[28vw] min-w-[450px] translate-x-full bg-white shadow-lg transition-transform duration-300 ease-in-out group-hover:translate-x-0">
         <div className="flex h-full flex-col">
           <header className="border-b border-neutral-200 px-4 py-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-neutral-900">

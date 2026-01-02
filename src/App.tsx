@@ -124,7 +124,7 @@ function App() {
       <HelpMenu />
 
       {/* メインコンテンツ */}
-      <div className="flex w-3/4 flex-col gap-4 overflow-auto px-8 py-6 ml-14 mr-14">
+      <div className="flex w-3/4 flex-col gap-4 overflow-auto px-8 py-6 ml-14 mr-14 peer-hover:translate-x-[-16.666%] transition-transform duration-300 ease-in-out">
         {currentStage && (
           <header className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold text-neutral-900">
