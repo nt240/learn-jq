@@ -1,4 +1,4 @@
-import { stages, type Stage } from "../config/stages";
+import { stages } from "../config/stages";
 
 type StageMenuProps = {
   currentStageId: string;

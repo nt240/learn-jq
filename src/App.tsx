@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { JsonCode } from "./components/JsonCode";
 import { Pane } from "./components/Pane";
 import { StageMenu } from "./components/StageMenu";
+import { HelpMenu } from "./components/HelpMenu";
 import { stages } from "./config/stages";
 import { useJq } from "./hooks/useJq";
 import type { OutputState } from "./types";
@@ -137,14 +138,17 @@ function App() {
 
   return (
     <div className="flex h-screen justify-center bg-neutral-50">
-      {/* ハンバーガーメニュー */}
+      {/* 左側：ステージメニュー */}
       <StageMenu
         currentStageId={currentStageId}
         onStageSelect={handleStageSelect}
       />
 
+      {/* 右側：ヘルプメニュー */}
+      <HelpMenu />
+
       {/* メインコンテンツ */}
-      <div className="flex w-3/4 flex-col gap-4 overflow-auto px-8 py-6 ml-14">
+      <div className="flex w-3/4 flex-col gap-4 overflow-auto px-8 py-6 ml-14 mr-14">
         {currentStage && (
           <header className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold text-neutral-900">
